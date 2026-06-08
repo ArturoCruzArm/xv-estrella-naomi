@@ -267,6 +267,11 @@ const photos = [
     "imagenes/IMG_3466.webp","imagenes/IMG_3467.webp","imagenes/IMG_3470.webp","imagenes/IMG_3471.webp","imagenes/IMG_3472.webp",
     "imagenes/IMG_3473.webp"
 ];
+// Thumbnail helper: usa thumb/ en grid para ahorrar RAM en moviles
+function getThumbPath(fullPath) {
+    return fullPath.replace('imagenes/', 'imagenes/thumb/');
+}
+
 
 // ── Configuración del evento ──
 const CONFIG = {
