@@ -75,6 +75,9 @@ let touchStartY = 0;
 let scrollPositionBeforeModal = 0;
 let scrollSaveTimer = null;
 let modalOpen = false;
+let currentPage = 1;
+let pageSize = 60;
+let searchQuery = '';
 
 // ========================================
 // LOCAL STORAGE FUNCTIONS
@@ -105,7 +108,7 @@ async function loadSelections(isPoll = false) {
         if (!evento_id) { sbDisponible = false; return; }
 
         const r = await fetch(
-            `${SUPABASE_URL}/rest/v1/selecciones?evento_id=eq.${evento_id}&select=foto_index,impresion,invitacion,descartada`,
+            `${SUPABASE_URL}/rest/v1/selecciones?evento_id=eq.${evento_id}&select=foto_index,ampliacion,impresion,invitacion,descartada`,
             { headers: SB_HEADERS }
         );
         if (!r.ok) throw new Error(r.status);
@@ -113,15 +116,15 @@ async function loadSelections(isPoll = false) {
 
         const sb = {};
         rows.forEach(row => {
-            if (row.impresion || row.invitacion || row.descartada)
-                sb[row.foto_index] = { impresion: row.impresion, invitacion: row.invitacion, descartada: row.descartada };
+            if (row.ampliacion || row.impresion || row.invitacion || row.descartada)
+                sb[row.foto_index] = { ampliacion: row.ampliacion, impresion: row.impresion, invitacion: row.invitacion, descartada: row.descartada };
         });
 
         if (!isPoll) {
             // Carga inicial: merge y migrar localStorage a Supabase para que otros lo vean
             const merged = {...sb};
             Object.entries(photoSelections).forEach(([idx, sel]) => {
-                if (sel.impresion || sel.invitacion || sel.descartada) merged[idx] = sel;
+            if (sel.ampliacion || sel.impresion || sel.invitacion || sel.descartada) merged[idx] = sel;
             });
             photoSelections = merged;
             if (Object.keys(photoSelections).length > 0) {
@@ -145,7 +148,7 @@ async function loadSelections(isPoll = false) {
             });
             updateStats(); updateFilterButtons();
         } else {
-            renderGallery(); setupLazyLoad(); updateStats(); updateFilterButtons();
+            renderGallery(); updateStats(); updateFilterButtons();
         }
     } catch(e) {
         console.warn('[Supabase] Usando localStorage:', e.message);
@@ -169,7 +172,7 @@ async function sbSyncSelections() {
     if (!evento_id) return;
     const rows = Object.entries(snapshot).map(([idx, sel]) => ({
         evento_id, session_id: SESSION_ID, foto_index: parseInt(idx),
-        impresion: sel.impresion || false, invitacion: sel.invitacion || false, descartada: sel.descartada || false,
+        ampliacion: sel.ampliacion || false, impresion: sel.impresion || false, invitacion: sel.invitacion || false, descartada: sel.descartada || false,
     }));
     if (rows.length === 0) return;
     await fetch(`${SUPABASE_URL}/rest/v1/selecciones?on_conflict=evento_id,foto_index`, {
@@ -244,7 +247,6 @@ async function clearAllSelections() {
         photoSelections = {};
         try { localStorage.removeItem(STORAGE_KEY); } catch(e) {}
         renderGallery();
-        setupLazyLoad();
         updateStats();
         updateFilterButtons();
         showToast('Todas las selecciones han sido eliminadas', 'success');
@@ -256,6 +258,7 @@ async function clearAllSelections() {
 // ========================================
 function getStats() {
     const stats = {
+        ampliacion: 0,
         impresion: 0,
         invitacion: 0,
         descartada: 0,
@@ -263,6 +266,7 @@ function getStats() {
     };
 
     Object.values(photoSelections).forEach(selection => {
+        if (selection.ampliacion) stats.ampliacion++;
         if (selection.impresion) stats.impresion++;
         if (selection.invitacion) stats.invitacion++;
         if (selection.descartada) stats.descartada++;
@@ -276,6 +280,7 @@ function getStats() {
 function updateStats() {
     const stats = getStats();
 
+    document.getElementById('countAmpliacion').textContent = stats.ampliacion;
     document.getElementById('countImpresion').textContent =
         LIMITES.impresion ? `${stats.impresion}/${LIMITES.impresion}` : stats.impresion;
     document.getElementById('countInvitacion').textContent = stats.invitacion;
@@ -323,12 +328,26 @@ function renderGallery() {
 
     if (photos.length === 0) {
         grid.innerHTML = '<div class="no-photos-message">Las fotos estarán disponibles después del evento (28 de marzo de 2026)</div>';
+        renderPagination(0);
         return;
     }
 
-    photos.forEach((photo, index) => {
+    const filteredIndices = getFilteredIndices();
+    const totalPages = Math.max(1, Math.ceil(filteredIndices.length / pageSize));
+    currentPage = Math.min(Math.max(1, currentPage), totalPages);
+    const start = (currentPage - 1) * pageSize;
+    const pageIndices = filteredIndices.slice(start, start + pageSize);
+
+    if (!pageIndices.length) {
+        grid.innerHTML = '<div class="no-photos-message">No hay fotos que coincidan con esta búsqueda o filtro.</div>';
+        renderPagination(filteredIndices.length);
+        return;
+    }
+
+    pageIndices.forEach(index => {
+        const photo = photos[index];
         const selection = photoSelections[index] || {};
-        const hasAny = selection.impresion || selection.invitacion || selection.descartada;
+        const hasAny = selection.ampliacion || selection.impresion || selection.invitacion || selection.descartada;
 
         const card = document.createElement('div');
         card.className = 'photo-card';
@@ -338,6 +357,7 @@ function renderGallery() {
             card.classList.add('has-descartada');
         } else {
             const categories = [];
+            if (selection.ampliacion) categories.push('ampliacion');
             if (selection.impresion) categories.push('impresion');
             if (selection.invitacion) categories.push('invitacion');
 
@@ -351,6 +371,7 @@ function renderGallery() {
         let badgesHTML = '';
         if (hasAny) {
             badgesHTML = '<div class="photo-badges">';
+            if (selection.ampliacion) badgesHTML += '<span class="badge badge-ampliacion">🖼️ Ampliación</span>';
             if (selection.impresion) badgesHTML += '<span class="badge badge-impresion">📸 Impresión</span>';
             if (selection.invitacion) badgesHTML += '<span class="badge badge-invitacion">💌 Invitación</span>';
             if (selection.descartada) badgesHTML += '<span class="badge badge-descartada">❌ Descartada</span>';
@@ -360,7 +381,7 @@ function renderGallery() {
         const displayNumber = `Foto ${index + 1}`;
         const mediaHTML = `
             <div class="photo-image-container">
-                <img data-src="${photo}" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 3'/%3E" alt="${displayNumber}" class="lazy-img">
+                <img data-src="${getThumbPath(photo)}" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 3'/%3E" alt="${displayNumber}" class="lazy-img" loading="lazy" decoding="async">
             </div>
         `;
 
@@ -374,7 +395,50 @@ function renderGallery() {
         grid.appendChild(card);
     });
 
-    applyFilter();
+    renderPagination(filteredIndices.length);
+    setupLazyLoad();
+}
+
+function matchesCurrentFilter(index) {
+    const selection = photoSelections[index] || {};
+    switch (currentFilter) {
+        case 'ampliacion': return selection.ampliacion === true;
+        case 'impresion': return selection.impresion === true;
+        case 'invitacion': return selection.invitacion === true;
+        case 'descartada': return selection.descartada === true;
+        case 'sin-clasificar': return !selection.ampliacion && !selection.impresion && !selection.invitacion && !selection.descartada;
+        default: return true;
+    }
+}
+
+function getFilteredIndices() {
+    const query = searchQuery.trim().toLocaleLowerCase('es');
+    return photos.map((photo, index) => ({ photo, index })).filter(item => {
+        if (!matchesCurrentFilter(item.index)) return false;
+        if (!query) return true;
+        return String(item.index + 1).includes(query) || decodeURIComponent(item.photo).toLocaleLowerCase('es').includes(query);
+    }).map(item => item.index);
+}
+
+function renderPagination(totalItems) {
+    const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+    const markup = totalItems ? `
+        <nav class="pagination" aria-label="Paginación de fotos">
+            <button type="button" data-page="${currentPage - 1}" ${currentPage === 1 ? 'disabled' : ''}>← Anterior</button>
+            <span>Página <strong>${currentPage}</strong> de ${totalPages} · ${totalItems} fotos</span>
+            <button type="button" data-page="${currentPage + 1}" ${currentPage === totalPages ? 'disabled' : ''}>Siguiente →</button>
+        </nav>` : '';
+    ['paginationTop', 'paginationBottom'].forEach(id => {
+        const container = document.getElementById(id);
+        if (container) container.innerHTML = markup;
+    });
+    document.querySelectorAll('.pagination button[data-page]').forEach(button => {
+        button.addEventListener('click', () => {
+            currentPage = Number(button.dataset.page);
+            renderGallery();
+            document.querySelector('.gallery-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+    });
 }
 
 // ========================================
@@ -423,38 +487,13 @@ function setupLazyLoad() {
 // FILTER FUNCTIONS
 // ========================================
 function applyFilter() {
-    const cards = document.querySelectorAll('.photo-card');
-
-    cards.forEach(card => {
-        const index = parseInt(card.dataset.index);
-        const selection = photoSelections[index] || {};
-        let show = false;
-
-        switch (currentFilter) {
-            case 'all':
-                show = true;
-                break;
-            case 'impresion':
-                show = selection.impresion === true;
-                break;
-            case 'invitacion':
-                show = selection.invitacion === true;
-                break;
-            case 'descartada':
-                show = selection.descartada === true;
-                break;
-            case 'sin-clasificar':
-                show = !selection.impresion && !selection.invitacion && !selection.descartada;
-                break;
-        }
-
-        card.classList.toggle('hidden', !show);
-    });
+    currentPage = 1;
+    renderGallery();
 }
 
 function setFilter(filter) {
     currentFilter = filter;
-    applyFilter();
+    currentPage = 1;
 
     document.querySelectorAll('.btn-filter').forEach(btn => {
         btn.classList.remove('active');
@@ -465,18 +504,21 @@ function setFilter(filter) {
         activeBtn.classList.add('active');
     }
     try { localStorage.setItem(KEY_FILTER, filter); } catch (e) {}
+    renderGallery();
 }
 
 function updateFilterButtons() {
     const stats = getStats();
 
     const btnAll = document.getElementById('btnFilterAll');
+    const btnAmpliacion = document.getElementById('btnFilterAmpliacion');
     const btnImpresion = document.getElementById('btnFilterImpresion');
     const btnInvitacion = document.getElementById('btnFilterInvitacion');
     const btnDescartada = document.getElementById('btnFilterDescartada');
     const btnSinClasificar = document.getElementById('btnFilterSinClasificar');
 
     if (btnAll) btnAll.textContent = `Todas (${photos.length})`;
+    if (btnAmpliacion) btnAmpliacion.textContent = `Ampliación (${stats.ampliacion})`;
     if (btnImpresion) btnImpresion.textContent = `Impresión (${stats.impresion})`;
     if (btnInvitacion) btnInvitacion.textContent = `Invitación (${stats.invitacion})`;
     if (btnDescartada) btnDescartada.textContent = `Descartadas (${stats.descartada})`;
@@ -601,7 +643,7 @@ function updateCard(index) {
     if (!card) return;
 
     const selection = photoSelections[index] || {};
-    const hasAny = selection.impresion || selection.invitacion || selection.descartada;
+    const hasAny = selection.ampliacion || selection.impresion || selection.invitacion || selection.descartada;
 
     // Recalcular clases de color
     card.className = 'photo-card';
@@ -609,6 +651,7 @@ function updateCard(index) {
         card.classList.add('has-descartada');
     } else {
         const cats = [];
+        if (selection.ampliacion) cats.push('ampliacion');
         if (selection.impresion) cats.push('impresion');
         if (selection.invitacion) cats.push('invitacion');
         if (cats.length > 1) card.classList.add('has-multiple');
@@ -621,6 +664,7 @@ function updateCard(index) {
     if (hasAny) {
         const badges = document.createElement('div');
         badges.className = 'photo-badges';
+        if (selection.ampliacion) badges.innerHTML += '<span class="badge badge-ampliacion">🖼️ Ampliación</span>';
         if (selection.impresion) badges.innerHTML += '<span class="badge badge-impresion">📸 Impresión</span>';
         if (selection.invitacion) badges.innerHTML += '<span class="badge badge-invitacion">💌 Invitación</span>';
         if (selection.descartada) badges.innerHTML += '<span class="badge badge-descartada">❌ Descartada</span>';
@@ -631,10 +675,11 @@ function updateCard(index) {
     let show = false;
     switch (currentFilter) {
         case 'all': show = true; break;
+        case 'ampliacion': show = selection.ampliacion === true; break;
         case 'impresion': show = selection.impresion === true; break;
         case 'invitacion': show = selection.invitacion === true; break;
         case 'descartada': show = selection.descartada === true; break;
-        case 'sin-clasificar': show = !selection.impresion && !selection.invitacion && !selection.descartada; break;
+        case 'sin-clasificar': show = !selection.ampliacion && !selection.impresion && !selection.invitacion && !selection.descartada; break;
     }
     card.classList.toggle('hidden', !show);
 }
@@ -667,6 +712,20 @@ function saveModalSelection() {
     showToast('Selección guardada correctamente', 'success');
 }
 
+function deleteCurrentSelection() {
+    if (currentPhotoIndex === null) return;
+    const index = currentPhotoIndex;
+    delete photoSelections[index];
+    if (sbDisponible) sbDeleteSelection(index).catch(error => console.warn('[Supabase] Delete:', error.message));
+    saveSelections();
+    updateCard(index);
+    updateStats();
+    updateFilterButtons();
+    document.querySelectorAll('.option-btn').forEach(button => button.classList.remove('selected'));
+    closeModal();
+    showToast('Selección eliminada', 'success');
+}
+
 // ========================================
 // EXPORT FUNCTIONS
 // ========================================
@@ -676,7 +735,7 @@ function exportToJSON() {
     const costoExtra = fotosAdicionales * COSTO_FOTO_ADICIONAL;
 
     const exportData = {
-        evento: 'XV Años - Clara Susana Palomares Torres',
+        evento: 'XV Años - Estrella Naomi Lozano Hernández',
         fecha_exportacion: new Date().toISOString(),
         total_fotos: photos.length,
         estadisticas: stats,
@@ -688,10 +747,11 @@ function exportToJSON() {
 
     photos.forEach((photo, index) => {
         const selection = photoSelections[index];
-        if (selection && (selection.impresion || selection.invitacion || selection.descartada)) {
+        if (selection && (selection.ampliacion || selection.impresion || selection.invitacion || selection.descartada)) {
             exportData.selecciones.push({
                 numero_foto: index + 1,
                 archivo: photo,
+                ampliacion: selection.ampliacion || false,
                 impresion: selection.impresion || false,
                 invitacion: selection.invitacion || false,
                 descartada: selection.descartada || false
@@ -703,7 +763,7 @@ function exportToJSON() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `seleccion-fotos-xv-clara-susana-${new Date().toISOString().split('T')[0]}.json`;
+    a.download = `seleccion-fotos-xv-estrella-naomi-${new Date().toISOString().split('T')[0]}.json`;
     a.click();
     URL.revokeObjectURL(url);
 
@@ -715,12 +775,13 @@ function generateTextSummary() {
     const fotosAdicionales = Math.max(0, stats.impresion - LIMITES.impresion);
     const costoExtra = fotosAdicionales * COSTO_FOTO_ADICIONAL;
 
-    let summary = '🎉 SELECCIÓN DE FOTOS - XV AÑOS CLARA SUSANA PALOMARES TORRES\n';
+    let summary = '🎉 SELECCIÓN DE FOTOS - XV AÑOS ESTRELLA NAOMI LOZANO HERNÁNDEZ\n';
     summary += '═══════════════════════════════════════════════════\n\n';
     summary += `📋 SEGÚN CONTRATO:\n`;
     summary += `   📸 Impresión incluida: ${LIMITES.impresion} fotos\n\n`;
     summary += `📊 RESUMEN ACTUAL:\n`;
     summary += `   Total de fotos disponibles: ${photos.length}\n`;
+    summary += `   🖼️ Para ampliación: ${stats.ampliacion}\n`;
     summary += `   📸 Para impresión: ${stats.impresion}/${LIMITES.impresion} ${stats.impresion === LIMITES.impresion ? '✓' : stats.impresion > LIMITES.impresion ? '⚠️ ADICIONALES' : '⚠️ FALTA'}\n`;
     summary += `   💌 Para invitación: ${stats.invitacion}\n`;
     summary += `   ❌ Descartadas: ${stats.descartada}\n`;
@@ -772,7 +833,6 @@ function showToast(message, type = 'success') {
 // ========================================
 document.addEventListener('DOMContentLoaded', () => {
     renderGallery();
-    setupLazyLoad();
     updateStats();
     updateFilterButtons();
     loadSelections();
@@ -787,12 +847,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Filter buttons
     const btnFilterAll = document.getElementById('btnFilterAll');
+    const btnFilterAmpliacion = document.getElementById('btnFilterAmpliacion');
     const btnFilterImpresion = document.getElementById('btnFilterImpresion');
     const btnFilterInvitacion = document.getElementById('btnFilterInvitacion');
     const btnFilterDescartada = document.getElementById('btnFilterDescartada');
     const btnFilterSinClasificar = document.getElementById('btnFilterSinClasificar');
 
     if (btnFilterAll) btnFilterAll.addEventListener('click', () => setFilter('all'));
+    if (btnFilterAmpliacion) btnFilterAmpliacion.addEventListener('click', () => setFilter('ampliacion'));
     if (btnFilterImpresion) btnFilterImpresion.addEventListener('click', () => setFilter('impresion'));
     if (btnFilterInvitacion) btnFilterInvitacion.addEventListener('click', () => setFilter('invitacion'));
     if (btnFilterDescartada) btnFilterDescartada.addEventListener('click', () => setFilter('descartada'));
@@ -807,14 +869,64 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnShare) btnShare.addEventListener('click', copyToClipboard);
     if (btnClear) btnClear.addEventListener('click', clearAllSelections);
 
+    const searchInput = document.getElementById('photoSearch');
+    const pageSizeSelect = document.getElementById('pageSize');
+    const jumpInput = document.getElementById('jumpPhoto');
+    const jumpButton = document.getElementById('btnJumpPhoto');
+    const fullscreenButton = document.getElementById('btnFullscreen');
+
+    if (searchInput) searchInput.addEventListener('input', () => {
+        searchQuery = searchInput.value;
+        currentPage = 1;
+        renderGallery();
+    });
+    if (pageSizeSelect) pageSizeSelect.addEventListener('change', () => {
+        pageSize = Number(pageSizeSelect.value) || 60;
+        currentPage = 1;
+        renderGallery();
+    });
+    const jumpToPhoto = () => {
+        const number = Number(jumpInput?.value);
+        if (!Number.isInteger(number) || number < 1 || number > photos.length) {
+            showToast(`Escribe un número entre 1 y ${photos.length}.`, 'error');
+            return;
+        }
+        searchQuery = '';
+        if (searchInput) searchInput.value = '';
+        currentFilter = 'all';
+        document.querySelectorAll('.btn-filter').forEach(btn => btn.classList.toggle('active', btn.dataset.filter === 'all'));
+        currentPage = Math.ceil(number / pageSize);
+        renderGallery();
+        requestAnimationFrame(() => {
+            const card = document.querySelector(`.photo-card[data-index="${number - 1}"]`);
+            card?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            card?.classList.add('photo-highlight');
+            setTimeout(() => card?.classList.remove('photo-highlight'), 1800);
+        });
+    };
+    if (jumpButton) jumpButton.addEventListener('click', jumpToPhoto);
+    if (jumpInput) jumpInput.addEventListener('keydown', event => {
+        if (event.key === 'Enter') jumpToPhoto();
+    });
+    if (fullscreenButton) fullscreenButton.addEventListener('click', async () => {
+        try {
+            if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
+            else await document.exitFullscreen();
+        } catch (_) {
+            showToast('Pantalla completa no está disponible en este dispositivo.', 'error');
+        }
+    });
+
     // Modal controls
     const modalClose = document.querySelector('.modal-close');
     const btnCancelSelection = document.getElementById('btnCancelSelection');
     const btnSaveSelection = document.getElementById('btnSaveSelection');
+    const btnDeleteSelection = document.getElementById('btnDeleteSelection');
 
     if (modalClose) modalClose.addEventListener('click', closeModal);
     if (btnCancelSelection) btnCancelSelection.addEventListener('click', closeModal);
     if (btnSaveSelection) btnSaveSelection.addEventListener('click', saveModalSelection);
+    if (btnDeleteSelection) btnDeleteSelection.addEventListener('click', deleteCurrentSelection);
 
     // Option buttons
     document.querySelectorAll('.option-btn').forEach(btn => {

@@ -2,6 +2,7 @@
    VARIABLES
    ======================================== */
 :root {
+    --color-ampliacion: #7c3aed;
     --color-impresion: #2196f3;
     --color-invitacion: #e91e63;
     --color-descartada: #f44336;
@@ -108,6 +109,11 @@ body {
     background: linear-gradient(135deg, rgba(33, 150, 243, 0.05), white);
 }
 
+.stat-card.ampliacion {
+    border-color: var(--color-ampliacion);
+    background: linear-gradient(135deg, rgba(124, 58, 237, 0.06), white);
+}
+
 .stat-card.invitacion {
     border-color: var(--color-invitacion);
     background: linear-gradient(135deg, rgba(233, 30, 99, 0.05), white);
@@ -155,6 +161,61 @@ body {
     margin-bottom: 0;
 }
 
+.selector-tools {
+    display: grid;
+    grid-template-columns: minmax(220px, 1.5fr) minmax(150px, .7fr) minmax(200px, .9fr) auto;
+    gap: 12px;
+    align-items: end;
+    margin: 0 auto 18px;
+    padding: 16px;
+    border: 1px solid #eadfd5;
+    border-radius: 14px;
+    background: #fffaf6;
+}
+
+.selector-tools label {
+    display: grid;
+    gap: 5px;
+    color: #66584d;
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+}
+
+.selector-tools input,
+.selector-tools select {
+    width: 100%;
+    min-height: 43px;
+    padding: 9px 12px;
+    border: 1px solid #d8c9bd;
+    border-radius: 9px;
+    outline: none;
+    background: white;
+    color: var(--text-dark);
+    font: inherit;
+}
+
+.selector-tools input:focus,
+.selector-tools select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(212, 163, 115, .18);
+}
+
+.jump-control {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 6px;
+}
+
+.btn-jump,
+.btn-fullscreen {
+    min-height: 43px;
+    border-radius: 9px;
+    background: var(--secondary-color);
+    color: white;
+}
+
 .btn {
     padding: 12px 24px;
     border: none;
@@ -190,6 +251,11 @@ body {
 .filter-impresion.active {
     background: var(--color-impresion);
     border-color: var(--color-impresion);
+}
+
+.filter-ampliacion.active {
+    background: var(--color-ampliacion);
+    border-color: var(--color-ampliacion);
 }
 
 .filter-invitacion.active {
@@ -289,6 +355,46 @@ body {
 
 .photo-card.has-impresion {
     border-color: var(--color-impresion);
+}
+
+.pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin: 12px 0 24px;
+    color: #65594f;
+    text-align: center;
+}
+
+.pagination button {
+    min-height: 42px;
+    padding: 9px 17px;
+    border: 1px solid #d8c9bd;
+    border-radius: 22px;
+    background: white;
+    color: var(--secondary-color);
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.pagination button:disabled {
+    cursor: default;
+    opacity: .38;
+}
+
+.photo-highlight {
+    animation: photo-highlight 1.8s ease;
+}
+
+@keyframes photo-highlight {
+    0%, 100% { box-shadow: var(--shadow); }
+    20%, 70% { border-color: #f59e0b; box-shadow: 0 0 0 6px rgba(245, 158, 11, .25), var(--shadow-hover); }
+}
+
+.photo-card.has-ampliacion {
+    border-color: var(--color-ampliacion);
 }
 
 .photo-card.has-invitacion {
@@ -404,6 +510,10 @@ body {
 
 .badge-impresion {
     background: var(--color-impresion);
+}
+
+.badge-ampliacion {
+    background: var(--color-ampliacion);
 }
 
 .badge-invitacion {
@@ -617,6 +727,11 @@ body {
     background: linear-gradient(135deg, rgba(33, 150, 243, 0.1), white);
 }
 
+.option-btn.ampliacion.selected {
+    border-color: var(--color-ampliacion);
+    background: linear-gradient(135deg, rgba(124, 58, 237, 0.1), white);
+}
+
 .option-btn.invitacion.selected {
     border-color: var(--color-invitacion);
     background: linear-gradient(135deg, rgba(233, 30, 99, 0.1), white);
@@ -651,6 +766,13 @@ body {
     background: #999;
     color: white;
     padding: 15px 30px;
+}
+
+.btn-delete-selection {
+    background: #fff1f1;
+    color: #b42318;
+    border: 1px solid #efb4ae;
+    padding: 15px 22px;
 }
 
 .btn-cancel:hover {
@@ -757,6 +879,14 @@ body {
     .action-buttons {
         flex-direction: column;
         gap: 8px;
+    }
+
+    .selector-tools {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .selector-search {
+        grid-column: 1 / -1;
     }
 
     .btn {
@@ -894,6 +1024,25 @@ body {
 
     .action-buttons {
         gap: 6px;
+    }
+
+    .selector-tools {
+        grid-template-columns: 1fr;
+        padding: 12px;
+    }
+
+    .selector-search {
+        grid-column: auto;
+    }
+
+    .pagination {
+        gap: 8px;
+        font-size: .78rem;
+    }
+
+    .pagination button {
+        padding: 8px 11px;
+        font-size: .78rem;
     }
 
     .btn {

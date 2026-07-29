@@ -2,115 +2,148 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Selector de Fotos - XV Años Estrella Naomi</title>
+    <link rel="stylesheet" href="css/selector.css?v=3">
+    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Playfair+Display:wght@400;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Lato:wght@300;400;700&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/fontawesome.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/solid.min.css">
-    <link rel="stylesheet" href="css/selector.css?v=1">
 </head>
 <body>
+    <!-- Header -->
     <header class="header">
-        <h1 class="main-title">Estrella Naomi Lozano Hernandez</h1>
-        <p class="subtitle">XV Años</p>
-        <p class="instructions">Selecciona las fotos para impresión</p>
+        <div class="container">
+            <h1 class="main-title">Selector de Fotos</h1>
+            <h2 class="subtitle">XV Años — Estrella Naomi</h2>
+            <p class="instructions">Revisa tus fotos y selecciona tus favoritas:</p>
+            <p class="instructions"><strong>📸 Impresión · 🖼️ Ampliación · 💌 Invitación · ❌ Descartar</strong></p>
+        </div>
     </header>
 
-    <div class="container">
-        <!-- Control Panel -->
-        <div class="control-panel">
+    <!-- Control Panel -->
+    <section class="control-panel">
+        <div class="container">
             <div class="stats-row">
+                <div class="stat-card ampliacion">
+                    <div class="stat-icon">🖼️</div>
+                    <div class="stat-info">
+                        <h3>Ampliación</h3>
+                        <p class="stat-count" id="countAmpliacion">0</p>
+                    </div>
+                </div>
                 <div class="stat-card impresion">
-                    <span class="stat-icon">📸</span>
+                    <div class="stat-icon">📸</div>
                     <div class="stat-info">
                         <h3>Impresión</h3>
-                        <span class="stat-count" id="countImpresion">0/100</span>
+                        <p class="stat-count" id="countImpresion">0</p>
                     </div>
                 </div>
                 <div class="stat-card invitacion">
-                    <span class="stat-icon">💌</span>
+                    <div class="stat-icon">💌</div>
                     <div class="stat-info">
                         <h3>Invitación</h3>
-                        <span class="stat-count" id="countInvitacion">0</span>
+                        <p class="stat-count" id="countInvitacion">0</p>
                     </div>
                 </div>
                 <div class="stat-card descartada">
-                    <span class="stat-icon">❌</span>
+                    <div class="stat-icon">❌</div>
                     <div class="stat-info">
                         <h3>Descartadas</h3>
-                        <span class="stat-count" id="countDescartada">0</span>
+                        <p class="stat-count" id="countDescartada">0</p>
                     </div>
                 </div>
                 <div class="stat-card sin-clasificar">
-                    <span class="stat-icon">⭕</span>
+                    <div class="stat-icon">⭕</div>
                     <div class="stat-info">
                         <h3>Sin Clasificar</h3>
-                        <span class="stat-count" id="countSinClasificar">0</span>
+                        <p class="stat-count" id="countSinClasificar">0</p>
                     </div>
                 </div>
             </div>
 
-            <div id="extraCostDisplay" style="display:none; background:rgba(255,152,0,0.15); border:1.5px solid #ff9800; border-radius:10px; padding:10px 16px; margin:10px 0; text-align:center; color:#ff9800;">
-                ⚠️ Fotos adicionales: <strong id="extraCostDetail"></strong> — Costo extra: <strong id="extraCostAmount"></strong>
+            <div class="action-buttons">
+                <button class="btn btn-filter active" id="btnFilterAll" data-filter="all">Todas (0)</button>
+                <button class="btn btn-filter filter-ampliacion" id="btnFilterAmpliacion" data-filter="ampliacion">Ampliación (0)</button>
+                <button class="btn btn-filter filter-impresion" id="btnFilterImpresion" data-filter="impresion">Impresión (0)</button>
+                <button class="btn btn-filter filter-invitacion" id="btnFilterInvitacion" data-filter="invitacion">Invitación (0)</button>
+                <button class="btn btn-filter filter-descartada" id="btnFilterDescartada" data-filter="descartada">Descartadas (0)</button>
+                <button class="btn btn-filter filter-sin-clasificar" id="btnFilterSinClasificar" data-filter="sin-clasificar">Sin Clasificar (0)</button>
             </div>
 
-            <div class="action-buttons">
-                <button class="btn btn-filter active" id="btnFilterAll" data-filter="all">Todas</button>
-                <button class="btn btn-filter filter-impresion" id="btnFilterImpresion" data-filter="impresion">Impresión</button>
-                <button class="btn btn-filter filter-invitacion" id="btnFilterInvitacion" data-filter="invitacion">Invitación</button>
-                <button class="btn btn-filter filter-descartada" id="btnFilterDescartada" data-filter="descartada">Descartadas</button>
-                <button class="btn btn-filter filter-sin-clasificar" id="btnFilterSinClasificar" data-filter="sin-clasificar">Sin Clasificar</button>
+            <div class="selector-tools" aria-label="Herramientas de galería">
+                <label class="selector-search">
+                    <span>Buscar</span>
+                    <input type="search" id="photoSearch" placeholder="Número o nombre de archivo">
+                </label>
+                <label>
+                    <span>Fotos por página</span>
+                    <select id="pageSize">
+                        <option value="30">30</option>
+                        <option value="60" selected>60</option>
+                        <option value="120">120</option>
+                    </select>
+                </label>
+                <label>
+                    <span>Ir a foto</span>
+                    <span class="jump-control">
+                        <input type="number" id="jumpPhoto" min="1" placeholder="Ej. 350">
+                        <button type="button" class="btn btn-jump" id="btnJumpPhoto">Ir</button>
+                    </span>
+                </label>
+                <button type="button" class="btn btn-fullscreen" id="btnFullscreen">⛶ Pantalla completa</button>
             </div>
 
             <div class="action-buttons secondary">
-                <button class="btn btn-export" id="btnExport"><i class="fas fa-download"></i> Descargar Reporte</button>
-                <button class="btn btn-share" id="btnShare"><i class="fas fa-copy"></i> Copiar Resumen</button>
-                <button class="btn btn-clear" id="btnClear"><i class="fas fa-trash"></i> Limpiar Todo</button>
+                <button class="btn btn-export" id="btnExport">📥 Descargar Reporte</button>
+                <button class="btn btn-share" id="btnShare">📤 Copiar Resumen</button>
+                <button class="btn btn-clear" id="btnClear">🗑️ Limpiar Todo</button>
             </div>
         </div>
+    </section>
 
-        <!-- Gallery Section -->
-        <section class="gallery-section">
-            <div class="photos-grid" id="photosGrid">
-                <!-- Photos will be loaded here by JavaScript -->
-            </div>
-        </section>
-    </div>
+    <!-- Gallery -->
+    <section class="gallery-section">
+        <div class="container">
+            <div id="paginationTop"></div>
+            <div class="photos-grid" id="photosGrid"></div>
+            <div id="paginationBottom"></div>
+        </div>
+    </section>
 
-    <!-- Modal -->
-    <div class="modal" id="photoModal">
-        <button class="modal-nav-btn modal-prev" id="btnPrevPhoto">&#10094;</button>
-        <button class="modal-nav-btn modal-next" id="btnNextPhoto">&#10095;</button>
-
+    <!-- Modal for Photo Selection -->
+    <div id="photoModal" class="modal">
         <div class="modal-content">
             <span class="modal-close">&times;</span>
-
             <div class="modal-body">
+                <button class="modal-nav-btn modal-prev" id="btnPrevPhoto" title="Foto anterior (←)">
+                    <span>‹</span>
+                </button>
+                <button class="modal-nav-btn modal-next" id="btnNextPhoto" title="Foto siguiente (→)">
+                    <span>›</span>
+                </button>
                 <div class="modal-image-container">
                     <img id="modalImage" src="" alt="Foto seleccionada">
-                    <div class="modal-photo-number" id="modalPhotoNumber" aria-live="polite"></div>
+                    <div class="modal-photo-number" id="modalPhotoNumber"></div>
                 </div>
-
                 <div class="modal-options">
-                    <h3>Clasificar esta foto</h3>
-                    <p class="modal-subtitle">Selecciona las categorías para esta imagen</p>
+                    <h3>¿Qué quieres hacer con esta foto?</h3>
+                    <p class="modal-subtitle">Puedes seleccionar una o varias opciones</p>
 
                     <div class="option-buttons">
+                        <button class="option-btn ampliacion" data-category="ampliacion">
+                            <span class="option-icon">🖼️</span>
+                            <span class="option-text">Ampliación</span>
+                            <span class="option-check">✓</span>
+                        </button>
                         <button class="option-btn impresion" data-category="impresion">
                             <span class="option-icon">📸</span>
-                            <span class="option-text">Impresión (5x7)</span>
+                            <span class="option-text">Impresión</span>
                             <span class="option-check">✓</span>
                         </button>
-
                         <button class="option-btn invitacion" data-category="invitacion">
                             <span class="option-icon">💌</span>
-                            <span class="option-text">Para Invitación</span>
+                            <span class="option-text">Invitación</span>
                             <span class="option-check">✓</span>
                         </button>
-
                         <button class="option-btn descartada" data-category="descartada">
                             <span class="option-icon">❌</span>
                             <span class="option-text">Descartar</span>
@@ -119,8 +152,9 @@
                     </div>
 
                     <div class="modal-actions">
-                        <button class="btn btn-cancel" id="btnCancelSelection">Cancelar</button>
                         <button class="btn btn-save" id="btnSaveSelection">Guardar</button>
+                        <button class="btn btn-delete-selection" id="btnDeleteSelection">Borrar esta selección</button>
+                        <button class="btn btn-cancel" id="btnCancelSelection">Cancelar</button>
                     </div>
                 </div>
             </div>
@@ -128,11 +162,11 @@
     </div>
 
     <!-- Toast Notification -->
-    <div class="toast" id="toast"></div>
+    <div id="toast" class="toast"></div>
 
-    <script>window.EVENT_CONFIG = { telefono: '524775014602', nombre: 'Estrella Naomi Lozano Hernandez', fechaEvento: new Date(2026, 5, 20, 13, 0, 0), costoFotoAdicional: 15 };</script>
-    <script src="photos_list.js?v=1"></script>
-    <script src="js/selector.js?v=2"></script>
+    <script>window.EVENTO_SLUG = 'xv-estrella-naomi';</script>
+    <script src="photos_list.js?v=2"></script>
+    <script src="js/selector.js?v=4"></script>
     <script src="visitas.js?v=1"></script>
     <script src="js/foro7-footer.js?v=1"></script>
 </body>

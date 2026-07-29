@@ -1,6 +1,6 @@
 // Service Worker — Foro 7 · xv-estrella-naomi
-const IMAGE_CACHE = 'foro7-estrella-naomi-images-v1';
-const APP_CACHE   = 'foro7-estrella-naomi-app-v1';
+const IMAGE_CACHE = 'foro7-estrella-naomi-images-v2';
+const APP_CACHE   = 'foro7-estrella-naomi-app-v2';
 
 // Cache-first para imágenes: sirve desde caché, descarga si no está
 async function cacheFirstImage(request) {
