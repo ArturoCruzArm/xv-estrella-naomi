@@ -52,9 +52,8 @@ const CONFIG = {
     nombre:             (window.EVENT_CONFIG && window.EVENT_CONFIG.nombre)             || 'Estrella Naomi Lozano Hernandez',
     telefono:           (window.EVENT_CONFIG && window.EVENT_CONFIG.telefono)           || '',
     fechaEvento:        (window.EVENT_CONFIG && window.EVENT_CONFIG.fechaEvento)        || new Date(2026, 2, 28, 17, 0, 0),
-    limiteImpresion:    200,
+    limiteImpresion:    100,
     limiteInvitacion:   null,
-    costoFotoAdicional: (window.EVENT_CONFIG && window.EVENT_CONFIG.costoFotoAdicional) || 15,
 };
 
 const STORAGE_KEY = 'xv_estrella_naomi_photo_selections';
@@ -65,8 +64,6 @@ const LIMITES = {
     impresion: CONFIG.limiteImpresion,
     invitacion: CONFIG.limiteInvitacion
 };
-const COSTO_FOTO_ADICIONAL = CONFIG.costoFotoAdicional;
-
 let photoSelections = {};
 let currentPhotoIndex = null;
 let currentFilter = 'all';
@@ -286,20 +283,6 @@ function updateStats() {
     document.getElementById('countInvitacion').textContent = stats.invitacion;
     document.getElementById('countDescartada').textContent = stats.descartada;
     document.getElementById('countSinClasificar').textContent = stats.sinClasificar;
-
-    const fotosAdicionales = Math.max(0, stats.impresion - LIMITES.impresion);
-    const costoExtra = fotosAdicionales * COSTO_FOTO_ADICIONAL;
-
-    const extraCostDisplay = document.getElementById('extraCostDisplay');
-    if (extraCostDisplay) {
-        if (fotosAdicionales > 0) {
-            extraCostDisplay.style.display = 'block';
-            document.getElementById('extraCostAmount').textContent = `$${costoExtra} MXN`;
-            document.getElementById('extraCostDetail').textContent = `${fotosAdicionales} foto${fotosAdicionales > 1 ? 's' : ''} adicional${fotosAdicionales > 1 ? 'es' : ''} x $${COSTO_FOTO_ADICIONAL}`;
-        } else {
-            extraCostDisplay.style.display = 'none';
-        }
-    }
 
     const impresionCard = document.querySelector('.stat-card.impresion');
 
@@ -732,16 +715,13 @@ function deleteCurrentSelection() {
 function exportToJSON() {
     const stats = getStats();
     const fotosAdicionales = Math.max(0, stats.impresion - LIMITES.impresion);
-    const costoExtra = fotosAdicionales * COSTO_FOTO_ADICIONAL;
-
     const exportData = {
         evento: 'XV Años - Estrella Naomi Lozano Hernández',
         fecha_exportacion: new Date().toISOString(),
         total_fotos: photos.length,
         estadisticas: stats,
         fotos_incluidas: LIMITES.impresion,
-        fotos_adicionales: fotosAdicionales,
-        costo_adicional: costoExtra,
+        fotos_excedentes_para_revision: fotosAdicionales,
         selecciones: []
     };
 
@@ -773,8 +753,6 @@ function exportToJSON() {
 function generateTextSummary() {
     const stats = getStats();
     const fotosAdicionales = Math.max(0, stats.impresion - LIMITES.impresion);
-    const costoExtra = fotosAdicionales * COSTO_FOTO_ADICIONAL;
-
     let summary = '🎉 SELECCIÓN DE FOTOS - XV AÑOS ESTRELLA NAOMI LOZANO HERNÁNDEZ\n';
     summary += '═══════════════════════════════════════════════════\n\n';
     summary += `📋 SEGÚN CONTRATO:\n`;
@@ -782,17 +760,13 @@ function generateTextSummary() {
     summary += `📊 RESUMEN ACTUAL:\n`;
     summary += `   Total de fotos disponibles: ${photos.length}\n`;
     summary += `   🖼️ Para ampliación: ${stats.ampliacion}\n`;
-    summary += `   📸 Para impresión: ${stats.impresion}/${LIMITES.impresion} ${stats.impresion === LIMITES.impresion ? '✓' : stats.impresion > LIMITES.impresion ? '⚠️ ADICIONALES' : '⚠️ FALTA'}\n`;
+    summary += `   📸 Para impresión: ${stats.impresion} seleccionadas (${LIMITES.impresion} incluidas)\n`;
     summary += `   💌 Para invitación: ${stats.invitacion}\n`;
     summary += `   ❌ Descartadas: ${stats.descartada}\n`;
     summary += `   ⭕ Sin clasificar: ${stats.sinClasificar}\n\n`;
 
-    if (fotosAdicionales > 0) {
-        summary += `💰 COSTO ADICIONAL:\n`;
-        summary += `   Fotos adicionales: ${fotosAdicionales}\n`;
-        summary += `   Costo por foto: $${COSTO_FOTO_ADICIONAL} MXN\n`;
-        summary += `   TOTAL ADICIONAL: $${costoExtra} MXN\n\n`;
-    }
+    if (fotosAdicionales > 0)
+        summary += `   ℹ️ ${fotosAdicionales} fotos exceden las 100 impresiones incluidas y quedan guardadas para revisión.\n\n`;
 
     summary += `\n📅 Generado el: ${new Date().toLocaleString('es-MX')}\n`;
 
