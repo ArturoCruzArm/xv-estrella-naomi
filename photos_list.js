@@ -1,5 +1,5 @@
 // Lista de fotos - XV Años Estrella Naomi
-// Mantiene las fotos originales primero y agrega automáticamente el resto.
+// Mantiene el orden estable para conservar las selecciones guardadas.
 window.PHOTOS_LIST = [
   "ChatGPT Image 19 jun 2026, 17_48_22.webp",
   "ChatGPT Image 19 jun 2026, 17_58_05.webp",
@@ -133,19 +133,6 @@ window.PHOTOS_LIST = [
   "DSC_3851.webp",
   "DSC_3852.webp",
   "DSC_3853.webp",
-  "DSC_3854.webp",
-  "DSC_3856.webp",
-  "DSC_3857.webp",
-  "DSC_3858.webp",
-  "DSC_3859.webp",
-  "DSC_3860.webp",
-  "DSC_3861.webp",
-  "DSC_3862.webp",
-  "DSC_3863.webp",
-  "DSC_3864.webp",
-  "DSC_3865.webp",
-  "DSC_3866.webp",
-  "DSC_3867.webp",
   "DSC_3868.webp",
   "DSC_3869.webp",
   "DSC_3870.webp",
